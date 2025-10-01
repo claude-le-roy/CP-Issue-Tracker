@@ -143,55 +143,70 @@ export type Database = {
       issues: {
         Row: {
           assigned_to: string | null
+          closing_date: string | null
           component: string | null
           created_at: string | null
           date: string | null
-          department: string | null
           description: string
           id: string
-          location: string | null
+          issue_logger: string | null
+          issue_updates: Json | null
           notify_flag: boolean | null
           operator: string | null
           priority: Database["public"]["Enums"]["issue_priority"] | null
           reported_by: string | null
+          resolution_steps: string | null
           resolved_at: string | null
+          responsible_department: string | null
           status: Database["public"]["Enums"]["issue_status"] | null
+          technical_team_notified: boolean | null
+          time_to_resolve: unknown | null
           title: string
           updated_at: string | null
         }
         Insert: {
           assigned_to?: string | null
+          closing_date?: string | null
           component?: string | null
           created_at?: string | null
           date?: string | null
-          department?: string | null
           description: string
           id?: string
-          location?: string | null
+          issue_logger?: string | null
+          issue_updates?: Json | null
           notify_flag?: boolean | null
           operator?: string | null
           priority?: Database["public"]["Enums"]["issue_priority"] | null
           reported_by?: string | null
+          resolution_steps?: string | null
           resolved_at?: string | null
+          responsible_department?: string | null
           status?: Database["public"]["Enums"]["issue_status"] | null
+          technical_team_notified?: boolean | null
+          time_to_resolve?: unknown | null
           title: string
           updated_at?: string | null
         }
         Update: {
           assigned_to?: string | null
+          closing_date?: string | null
           component?: string | null
           created_at?: string | null
           date?: string | null
-          department?: string | null
           description?: string
           id?: string
-          location?: string | null
+          issue_logger?: string | null
+          issue_updates?: Json | null
           notify_flag?: boolean | null
           operator?: string | null
           priority?: Database["public"]["Enums"]["issue_priority"] | null
           reported_by?: string | null
+          resolution_steps?: string | null
           resolved_at?: string | null
+          responsible_department?: string | null
           status?: Database["public"]["Enums"]["issue_status"] | null
+          technical_team_notified?: boolean | null
+          time_to_resolve?: unknown | null
           title?: string
           updated_at?: string | null
         }
@@ -297,7 +312,7 @@ export type Database = {
     }
     Enums: {
       issue_priority: "low" | "medium" | "high" | "critical"
-      issue_status: "open" | "in_progress" | "resolved" | "closed"
+      issue_status: "pending" | "open" | "in_progress" | "resolved" | "closed"
       user_role: "reporter" | "technician" | "manager" | "admin"
     }
     CompositeTypes: {
@@ -427,7 +442,7 @@ export const Constants = {
   public: {
     Enums: {
       issue_priority: ["low", "medium", "high", "critical"],
-      issue_status: ["open", "in_progress", "resolved", "closed"],
+      issue_status: ["pending", "open", "in_progress", "resolved", "closed"],
       user_role: ["reporter", "technician", "manager", "admin"],
     },
   },
