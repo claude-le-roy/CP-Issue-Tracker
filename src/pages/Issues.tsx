@@ -29,6 +29,13 @@ const Issues = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  // Sort issues: active issues first, closed last
+  const sortedFilteredIssues = filteredIssues.sort((a, b) => {
+    if (a.status === "closed" && b.status !== "closed") return 1;
+    if (a.status !== "closed" && b.status === "closed") return -1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "critical": return "destructive";
@@ -95,6 +102,7 @@ const Issues = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
@@ -119,14 +127,14 @@ const Issues = () => {
 
       {/* Issues List */}
       <div className="grid gap-4">
-        {filteredIssues.length === 0 ? (
+        {sortedFilteredIssues.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">No issues found</p>
             </CardContent>
           </Card>
         ) : (
-          filteredIssues.map((issue) => (
+          sortedFilteredIssues.map((issue) => (
             <Card
               key={issue.id}
               className="cursor-pointer hover:border-primary/50 transition-colors"
@@ -156,8 +164,8 @@ const Issues = () => {
                     {issue.component && (
                       <span>Component: {issue.component}</span>
                     )}
-                    {issue.department && (
-                      <span>Dept: {issue.department}</span>
+                    {issue.responsible_department && (
+                      <span>Dept: {issue.responsible_department}</span>
                     )}
                     {issue.operator && (
                       <span>Operator: {issue.operator}</span>

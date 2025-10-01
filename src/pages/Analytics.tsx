@@ -59,11 +59,11 @@ const Analytics = () => {
     })
   );
 
-  // By Department
+  // By Responsible Department
   const departmentCounts = issues
-    .filter((i) => i.department)
+    .filter((i) => i.responsible_department)
     .reduce((acc: any, issue) => {
-      acc[issue.department] = (acc[issue.department] || 0) + 1;
+      acc[issue.responsible_department] = (acc[issue.responsible_department] || 0) + 1;
       return acc;
     }, {});
 
@@ -169,11 +169,11 @@ const Analytics = () => {
           </CardContent>
         </Card>
 
-        {/* Department Distribution */}
+        {/* Responsible Department Distribution */}
         {departmentData.length > 0 && (
           <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle>Issues by Department</CardTitle>
+              <CardTitle>Issues by Responsible Department</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>

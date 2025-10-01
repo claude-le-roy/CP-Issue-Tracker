@@ -156,9 +156,9 @@ const IssueDetail = () => {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <h4 className="font-medium text-sm mb-1">Date</h4>
+              <h4 className="font-medium text-sm mb-1">Created Date</h4>
               <p className="text-muted-foreground">
-                {format(new Date(issue.date || issue.created_at), "PPP")}
+                {format(new Date(issue.created_at), "PPP")}
               </p>
             </div>
             {issue.component && (
@@ -169,20 +169,20 @@ const IssueDetail = () => {
             )}
             {issue.operator && (
               <div>
-                <h4 className="font-medium text-sm mb-1">Operator</h4>
+                <h4 className="font-medium text-sm mb-1">MNO / Operator</h4>
                 <p className="text-muted-foreground">{issue.operator}</p>
               </div>
             )}
-            {issue.department && (
+            {issue.responsible_department && (
               <div>
-                <h4 className="font-medium text-sm mb-1">Department</h4>
-                <p className="text-muted-foreground">{issue.department}</p>
+                <h4 className="font-medium text-sm mb-1">Responsible Department</h4>
+                <p className="text-muted-foreground">{issue.responsible_department}</p>
               </div>
             )}
-            {issue.location && (
+            {issue.issue_logger && (
               <div>
-                <h4 className="font-medium text-sm mb-1">Location</h4>
-                <p className="text-muted-foreground">{issue.location}</p>
+                <h4 className="font-medium text-sm mb-1">Issue Logger</h4>
+                <p className="text-muted-foreground">{issue.issue_logger}</p>
               </div>
             )}
             {issue.profiles && (
@@ -191,7 +191,36 @@ const IssueDetail = () => {
                 <p className="text-muted-foreground">{issue.profiles.full_name}</p>
               </div>
             )}
+            <div>
+              <h4 className="font-medium text-sm mb-1">Technical Team Notified</h4>
+              <p className="text-muted-foreground">
+                {issue.technical_team_notified ? "Yes" : "No"}
+              </p>
+            </div>
+            {issue.status === "closed" && issue.closing_date && (
+              <>
+                <div>
+                  <h4 className="font-medium text-sm mb-1">Closing Date</h4>
+                  <p className="text-muted-foreground">
+                    {format(new Date(issue.closing_date), "PPP")}
+                  </p>
+                </div>
+                {issue.time_to_resolve && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-1">Time to Resolve</h4>
+                    <p className="text-muted-foreground">{issue.time_to_resolve}</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
+
+          {issue.resolution_steps && (
+            <div className="pt-4 border-t">
+              <h3 className="font-semibold mb-2">Resolution Steps</h3>
+              <p className="text-muted-foreground whitespace-pre-wrap">{issue.resolution_steps}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -262,6 +291,37 @@ const IssueDetail = () => {
                       </Button>
                     )}
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Issue Updates Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Issue Updates ({issue.issue_updates?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(!issue.issue_updates || issue.issue_updates.length === 0) ? (
+            <p className="text-sm text-muted-foreground">No updates yet</p>
+          ) : (
+            <div className="space-y-3">
+              {issue.issue_updates.map((update, index) => (
+                <div key={index} className="border-l-2 border-primary/20 pl-4 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">
+                      {update.updated_by_name || "System"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(update.update_date), "PPp")}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{update.update_text}</p>
                 </div>
               ))}
             </div>

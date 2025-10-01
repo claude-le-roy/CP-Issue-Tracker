@@ -2,16 +2,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface IssueUpdate {
+  update_text: string;
+  update_date: string;
+  updated_by: string;
+  updated_by_name?: string;
+}
+
 interface Issue {
   id: string;
   title: string;
   description: string;
-  status: "open" | "in_progress" | "resolved" | "closed";
+  status: "pending" | "open" | "in_progress" | "resolved" | "closed";
   priority: "low" | "medium" | "high" | "critical";
-  department: string;
-  location: string;
   component: string;
   operator: string;
+  responsible_department: string;
+  issue_logger: string;
+  resolution_steps: string;
+  issue_updates: IssueUpdate[];
+  technical_team_notified: boolean;
+  closing_date: string;
+  time_to_resolve: string;
   notify_flag: boolean;
   date: string;
   reported_by: string;
@@ -30,10 +42,12 @@ interface CreateIssueData {
   description: string;
   status: string;
   priority: string;
-  department?: string;
-  location?: string;
   component?: string;
   operator?: string;
+  responsible_department?: string;
+  issue_logger?: string;
+  resolution_steps?: string;
+  technical_team_notified?: boolean;
   notify_flag?: boolean;
   date?: string;
 }
@@ -54,7 +68,10 @@ export const useIssues = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Issue[];
+      return (data || []).map(issue => ({
+        ...issue,
+        issue_updates: (issue.issue_updates as any) || []
+      })) as Issue[];
     },
   });
 };
@@ -76,7 +93,10 @@ export const useIssue = (id: string) => {
         .single();
 
       if (error) throw error;
-      return data as Issue;
+      return {
+        ...data,
+        issue_updates: (data.issue_updates as any) || []
+      } as Issue;
     },
     enabled: !!id,
   });
@@ -97,10 +117,12 @@ export const useCreateIssue = () => {
           description: issueData.description,
           status: issueData.status as any,
           priority: issueData.priority as any,
-          department: issueData.department,
-          location: issueData.location,
           component: issueData.component,
           operator: issueData.operator,
+          responsible_department: issueData.responsible_department,
+          issue_logger: issueData.issue_logger,
+          resolution_steps: issueData.resolution_steps,
+          technical_team_notified: issueData.technical_team_notified || false,
           notify_flag: issueData.notify_flag,
           date: issueData.date,
           reported_by: user.id,
