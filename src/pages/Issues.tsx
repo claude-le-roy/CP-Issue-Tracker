@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { IssueDetailModal } from "@/components/IssueDetailModal";
 
 const Issues = () => {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ const Issues = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleExport = async () => {
     toast.info("Export functionality coming soon!");
@@ -138,7 +141,10 @@ const Issues = () => {
             <Card
               key={issue.id}
               className="cursor-pointer hover:border-primary/50 transition-colors flex flex-col"
-              onClick={() => navigate(`/issues/${issue.id}`)}
+              onClick={() => {
+                setSelectedIssueId(issue.id);
+                setModalOpen(true);
+              }}
             >
               <CardHeader className="pb-3">
                 <div className="space-y-2">
@@ -201,6 +207,12 @@ const Issues = () => {
           ))
         )}
       </div>
+
+      <IssueDetailModal 
+        issueId={selectedIssueId}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 };
