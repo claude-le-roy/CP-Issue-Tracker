@@ -1,44 +1,69 @@
 # Workplace Issues Tracker
 
-A fullstack web application for tracking and managing workplace issues, built with React, Tailwind CSS, and Lovable Cloud.
+A fullstack web application for tracking and managing workplace issues with role-based access control, built with React, Tailwind CSS, and Lovable Cloud.
 
 ## Features
 
-- **Authentication**: Secure email/password authentication with automatic user profile creation
-- **Dashboard**: Overview of issue statistics with interactive charts
-- **Issue Management**: Create, view, edit, and delete workplace issues
-- **Issue Details**: Detailed view with comments and attachments support
-- **Filtering & Search**: Find issues by status, priority, and search terms
-- **Analytics**: Visual insights with charts showing issues by status, priority, and department
-- **Export Reports**: Generate PDF and Excel reports (coming soon)
-- **Mobile Responsive**: Fully responsive design that works on all devices
-- **Real-time Updates**: Live data synchronization across users
+### Authentication & Security
+- **Secure Authentication**: Email/password login with automatic email confirmation
+- **Password Reset Flow**: Complete forgot password functionality via email
+- **Remember Me**: Persistent sessions for returning users
+- **Role-Based Access Control (RBAC)**: Four user roles with different permissions
+  - **Reporter**: Can create and view issues
+  - **Technician**: Can update all issues
+  - **Manager**: Can access analytics and delete issues
+  - **Admin**: Full system access including user management
+- **Protected Routes**: Pages automatically restricted based on user role
+- **Secure Session Management**: Automatic session handling and refresh
+
+### Issue Management
+- **Complete CRUD**: Create, view, edit, and delete workplace issues
+- **Rich Details**: Track date, title, description, component, operator, priority, status
+- **File Attachments**: Upload, download, and manage files (max 10MB per file)
+- **Comments**: Collaborate with threaded comments on each issue
+- **Activity Logs**: Automatic tracking of all changes (who, what, when)
+- **Notifications**: Optional email notification flag per issue
+- **Advanced Filtering**: Search and filter by status, priority, department
+
+### Dashboard & Analytics
+- **Real-time Statistics**: Live overview of issue counts and status
+- **Interactive Charts**: Bar charts and pie charts for data visualization
+- **Department Analytics**: Track issues by department and component
+- **Role-Specific Views**: Managers and admins see additional analytics
+
+### User Experience
+- **Optimistic Updates**: Instant UI feedback with React Query
+- **Mobile Responsive**: Fully responsive design for all devices
+- **Brand Consistency**: Company colors (#242c7d, #2a5382, etc.) and Inter font throughout
+- **Loading States**: Smooth loading indicators and transitions
+- **Error Handling**: User-friendly error messages and validation
 
 ## Technology Stack
 
 ### Frontend
-- **React 18** - Modern UI library
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
+- **React 18** with TypeScript - Type-safe modern UI
+- **React Router** - Client-side routing with protected routes
+- **React Query** - Data fetching with optimistic updates
+- **Tailwind CSS** - Utility-first styling with custom design tokens
 - **Shadcn/ui** - Beautiful, accessible component library
-- **Recharts** - Powerful charting library
-- **React Router** - Client-side routing
+- **Recharts** - Interactive data visualization
 - **Sonner** - Toast notifications
-- **Lucide React** - Beautiful icons
+- **Lucide React** - Consistent iconography
 
 ### Backend (Lovable Cloud)
-- **PostgreSQL** - Relational database
-- **Row Level Security (RLS)** - Database-level security
-- **Authentication** - Built-in auth with email/password
-- **File Storage** - Secure file attachment storage
-- **Real-time subscriptions** - Live data updates
+- **PostgreSQL** - Relational database with custom types
+- **Row Level Security (RLS)** - Database-level security with role-aware policies
+- **Supabase Auth** - Authentication with email/password and password reset
+- **File Storage** - Secure attachment storage with access controls
+- **Database Functions** - Helper functions for role checking and activity logging
+- **Triggers** - Automatic profile creation and activity tracking
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ and npm installed ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
-- Git installed
+- Node.js 18+ and npm ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- Git
 
 ### Installation
 
@@ -64,152 +89,282 @@ A fullstack web application for tracking and managing workplace issues, built wi
 
 ### First Time Setup
 
-1. **Create an account**: Click "Sign up" on the auth page and create your first user account
-2. **Start tracking issues**: Once logged in, click "Report Issue" to create your first workplace issue
-3. **Explore features**: Navigate through Dashboard, Issues, and Analytics pages
+1. **Create an account**: Sign up with your email and password
+2. **Default role**: New users are assigned the "Reporter" role
+3. **Upgrade to Admin**: In Lovable Cloud → Database → user_roles table, manually change your role to 'admin'
+4. **Manage users**: Access the Admin page to assign roles to other users
+
+## User Roles & Permissions
+
+### Reporter (Default)
+- ✅ View dashboard
+- ✅ Create new issues
+- ✅ View all issues
+- ✅ Edit own issues
+- ✅ Delete own issues
+- ✅ Add comments and attachments
+- ❌ Access analytics
+- ❌ Manage users
+
+### Technician
+- ✅ All Reporter permissions
+- ✅ **Update any issue** (not just own)
+- ❌ Access analytics
+- ❌ Delete others' issues
+
+### Manager
+- ✅ All Technician permissions
+- ✅ **Access analytics dashboard**
+- ✅ **Delete any issue**
+- ❌ Manage users
+
+### Admin
+- ✅ All Manager permissions
+- ✅ **Manage user roles**
+- ✅ Full system access
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── ui/              # Reusable UI components (Shadcn)
-│   └── Layout.tsx       # Main application layout with navigation
+│   ├── ui/                    # Reusable UI components (Shadcn)
+│   ├── Layout.tsx             # Main layout with role-based navigation
+│   └── ProtectedRoute.tsx     # Route protection HOC
+├── contexts/
+│   └── AuthContext.tsx        # Auth state and role management
+├── hooks/
+│   ├── useIssues.ts          # React Query hooks for issues
+│   ├── useAttachments.ts     # File upload/download hooks
+│   └── useActivityLogs.ts    # Activity tracking hooks
 ├── pages/
-│   ├── Auth.tsx         # Login/Signup page
-│   ├── Dashboard.tsx    # Dashboard with stats and charts
-│   ├── Issues.tsx       # Issues list with filters
-│   ├── IssueDetail.tsx  # Individual issue view
-│   ├── IssueForm.tsx    # Create/Edit issue form
-│   ├── Analytics.tsx    # Analytics page with charts
-│   └── NotFound.tsx     # 404 page
+│   ├── Auth.tsx              # Login/Signup with forgot password
+│   ├── ResetPassword.tsx     # Password reset page
+│   ├── Dashboard.tsx         # Main dashboard with stats
+│   ├── Issues.tsx            # Issues list with filters
+│   ├── IssueDetail.tsx       # Individual issue view
+│   ├── IssueForm.tsx         # Create/Edit issue form
+│   ├── Analytics.tsx         # Analytics (Manager/Admin only)
+│   ├── Admin.tsx             # User management (Admin only)
+│   └── NotFound.tsx          # 404 page
 ├── integrations/
-│   └── supabase/        # Lovable Cloud client (auto-generated)
-├── App.tsx              # Main app component with routing
-├── main.tsx            # App entry point
-└── index.css           # Global styles and design tokens
+│   └── supabase/             # Lovable Cloud client (auto-generated)
+├── App.tsx                   # Main app with route protection
+└── index.css                 # Global styles and design tokens
 ```
 
 ## Database Schema
 
-The application uses the following main tables:
+### Core Tables
+- **profiles** - User profiles (auto-created on signup)
+- **user_roles** - User role assignments with RLS
+- **issues** - Workplace issues with all tracking fields
+- **comments** - Issue comments for collaboration
+- **attachments** - File attachment metadata
+- **activity_logs** - Automatic change tracking
 
-- **profiles** - User profiles with name, email, department, role
-- **issues** - Workplace issues with status, priority, department, location
-- **comments** - Comments on issues for collaboration
-- **attachments** - File attachments linked to issues
+### Security Features
+- All tables have Row Level Security (RLS) enabled
+- Role-aware policies using security definer functions
+- Automatic triggers for profile creation and activity logging
+- Secure file storage with user-specific access controls
 
-All tables have Row Level Security (RLS) policies to ensure data privacy and security.
+## Authentication Flows
+
+### Sign Up
+1. User enters email, password, and full name
+2. Account created with email auto-confirmed (for testing)
+3. Profile automatically created in database
+4. Default "Reporter" role assigned
+5. User redirected to dashboard
+
+### Sign In
+1. User enters email and password
+2. Optional "Remember me" checkbox
+3. Session persisted securely
+4. User role fetched and cached
+5. Redirected to dashboard with role badge
+
+### Forgot Password
+1. User clicks "Forgot password?" on login page
+2. Enters email address
+3. Receives password reset link via email
+4. Clicks link to access reset page
+5. Sets new password
+6. Redirected to login
 
 ## Design System
 
-The application uses a professional blue color palette:
+### Colors (HSL Values)
+All colors use the company's blue palette defined in `src/index.css`:
 
-- **Primary**: #242c7d (Deep navy)
-- **Secondary**: #2a5382 (Medium blue)
-- **Accent**: #2c5d85 (Teal blue)
-- **Highlight**: #2c508f (Royal blue)
-- **Typography**: Inter font family
+- **Primary**: #242c7d (Deep navy) - Main brand color
+- **Secondary**: #2a5382 (Medium blue) - Secondary actions
+- **Accent**: #2c5d85 (Teal blue) - Highlights
+- **Success**: Green for resolved issues
+- **Warning**: Orange for high priority
+- **Info**: Blue for in-progress status
 
-All colors are defined as HSL values in `src/index.css` using CSS custom properties for consistency.
+### Typography
+- **Font Family**: Inter (Google Fonts)
+- **Weights**: 300, 400, 500, 600, 700
+- Consistent sizing and spacing throughout
+
+### Components
+All components use semantic tokens from the design system:
+- No hardcoded colors (e.g., text-white, bg-blue-500)
+- Custom badge variants for status and priority
+- Branded buttons and cards
+- Consistent border radius and shadows
 
 ## Key Features Explained
 
-### Authentication
-- Email/password authentication with automatic email confirmation
-- Secure session management
-- Automatic profile creation on signup
-- Protected routes requiring authentication
+### Optimistic Updates
+Uses React Query for instant UI feedback:
+- Issue creation appears immediately
+- Updates reflect before server confirms
+- Automatic rollback on errors
+- Background refetching keeps data fresh
 
-### Issue Management
-- Create issues with title, description, priority, status
-- Assign department and location
-- Track who reported each issue
-- Edit and delete your own issues
-- Add comments for collaboration
+### File Attachments
+Secure file handling:
+- Upload to Lovable Cloud storage
+- Files organized by issue ID
+- Download with single click
+- Only uploaders can delete their files
+- 10MB file size limit
 
-### Analytics
-- Visual charts showing issue distribution
-- Filter by status, priority, department
-- Export reports (PDF/Excel coming soon)
+### Activity Logging
+Automatic change tracking:
+- Triggers log every create/update
+- Shows who made what changes
+- Timeline view on issue detail page
+- Helps with audit trails
 
-### Security
-- Row Level Security (RLS) on all tables
-- Users can only edit/delete their own issues
-- All users can view all issues (transparency)
-- Secure file storage with access controls
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run ESLint
-
-## Testing
-
-The application includes comprehensive tests using Jest and React Testing Library for key user flows:
-
-- Authentication flows (signup, login, logout)
-- Issue creation and editing
-- Dashboard data display
-- Analytics charts rendering
-- Form validation
-
-Run tests with:
-```bash
-npm test
-```
-
-## Deployment
-
-This project is designed to be deployed on Lovable:
-
-1. Go to your [Lovable project](https://lovable.dev/projects/b2080ce4-51e8-42cb-854b-fbddec768f48)
-2. Click "Publish" in the top right
-3. Your app will be deployed with a custom domain
-
-### Custom Domain
-
-You can connect a custom domain:
-1. Navigate to Project > Settings > Domains
-2. Click "Connect Domain"
-3. Follow the instructions to configure DNS
+### Role-Based Access
+Smart route protection:
+- Routes check user role automatically
+- Friendly "Access Denied" messages
+- Navigation hides unauthorized pages
+- Role badge visible in header
 
 ## Backend Management
 
-To view and manage your backend (database, auth, storage):
+Access your Lovable Cloud backend:
 
 1. Open your Lovable project
-2. Click the "Cloud" tab in the sidebar
-3. Here you can:
-   - View and edit database tables
-   - Manage user accounts
-   - View authentication logs
-   - Access file storage
-   - Monitor application usage
+2. Click "Cloud" in the sidebar
+3. Manage:
+   - Database tables and records
+   - User accounts and roles
+   - File storage
+   - Authentication logs
+   - Application usage
+
+### Manual Role Assignment
+
+Until you have an admin user:
+1. Go to Cloud → Database → user_roles
+2. Find your user_id from profiles table
+3. Update your role to 'admin'
+4. Refresh the app
+
+## Security Considerations
+
+### Implemented
+✅ Row Level Security on all tables
+✅ Security definer functions for role checks
+✅ Protected routes based on user role
+✅ Secure session management
+✅ File storage access controls
+✅ Input validation on forms
+✅ XSS protection via React
+✅ CSRF protection via Supabase
+
+### Recommended
+- Enable leaked password protection in Cloud settings
+- Review and customize RLS policies for your use case
+- Set up email templates for password reset
+- Configure production email provider (not Resend test domain)
+- Add rate limiting on API endpoints
+- Enable 2FA for admin accounts
+
+## Development
+
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+### Adding New Roles
+1. Update the user_role enum in database migration
+2. Add role to AuthContext type definition
+3. Update RLS policies as needed
+4. Add role-specific routes in App.tsx
+
+### Customizing Permissions
+Edit RLS policies in Lovable Cloud:
+- Go to Cloud → Database → Tables
+- Select table → Policies
+- Modify or add policies using helper functions
+
+## Deployment
+
+Deploy via Lovable:
+1. Go to your [Lovable project](https://lovable.dev/projects/b2080ce4-51e8-42cb-854b-fbddec768f48)
+2. Click "Publish"
+3. Your app deploys with custom domain option
+
+### Custom Domain
+1. Project > Settings > Domains
+2. Click "Connect Domain"
+3. Follow DNS configuration steps
+
+## Troubleshooting
+
+### "Access Denied" on All Pages
+- Check that user role was assigned in user_roles table
+- Verify RLS policies are not blocking access
+- Check browser console for errors
+
+### Password Reset Not Working
+- Verify email configuration in Cloud → Authentication
+- Check spam folder for reset emails
+- Ensure redirect URL is correct
+
+### Files Not Uploading
+- Check file size (max 10MB)
+- Verify storage bucket exists (issue-attachments)
+- Check storage policies in Cloud
+
+### Role Not Updating
+- Clear browser cache and refresh
+- Check user_roles table for correct user_id
+- Verify only one role per user
 
 ## Future Enhancements
 
-- PDF and Excel export functionality
-- Email notifications for new issues
-- Issue assignment workflows
-- File attachment preview
-- Advanced search and filters
-- Issue templates
-- SLA tracking
-- Mobile app (PWA)
+- [ ] Email notifications via Resend integration
+- [ ] PDF report generation
+- [ ] Excel export functionality
+- [ ] Issue assignment workflows
+- [ ] SLA tracking and alerts
+- [ ] Mobile app (PWA)
+- [ ] Bulk operations on issues
+- [ ] Custom fields per department
+- [ ] Issue templates
+- [ ] Advanced search with saved filters
 
 ## Support
 
-For questions or issues:
-- Check the [Lovable Documentation](https://docs.lovable.dev/)
-- Join the [Lovable Discord](https://discord.gg/lovable)
-- Contact support at support@lovable.dev
+- [Lovable Documentation](https://docs.lovable.dev/)
+- [Lovable Discord](https://discord.gg/lovable)
+- Email: support@lovable.dev
 
 ## License
 
-This project is created with Lovable and is available for use under your organization's license.
+This project is created with Lovable.
 
 ---
 

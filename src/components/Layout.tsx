@@ -1,42 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Session } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FileText, BarChart3, LogOut, Menu, X } from "lucide-react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { LayoutDashboard, FileText, BarChart3, LogOut, Menu, X, Shield } from "lucide-react";
 
 const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { signOut, loading, userRole } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
+    await signOut();
     navigate("/auth");
   };
 
@@ -48,26 +24,43 @@ const Layout = () => {
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  const getRoleBadgeVariant = () => {
+    switch (userRole) {
+      case "admin":
+        return "destructive";
+      case "manager":
+        return "warning";
+      case "technician":
+        return "info";
+      default:
+        return "secondary";
+    }
+  };
 
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/issues", icon: FileText, label: "Issues" },
-    { path: "/analytics", icon: BarChart3, label: "Analytics" },
-  ];
+    { path: "/analytics", icon: BarChart3, label: "Analytics", roles: ["manager", "admin"] },
+    { path: "/admin", icon: Shield, label: "Admin", roles: ["admin"] },
+  ].filter((item) => !item.roles || (userRole && item.roles.includes(userRole)));
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
               <FileText className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-lg font-bold">Issues Tracker</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold">Issues Tracker</h1>
+              {userRole && (
+                <Badge variant={getRoleBadgeVariant()} className="hidden sm:inline-flex">
+                  {userRole}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Desktop Navigation */}
