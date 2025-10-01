@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          issue_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          issue_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          issue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attachments: {
         Row: {
           created_at: string | null
@@ -101,11 +143,15 @@ export type Database = {
       issues: {
         Row: {
           assigned_to: string | null
+          component: string | null
           created_at: string | null
+          date: string | null
           department: string | null
           description: string
           id: string
           location: string | null
+          notify_flag: boolean | null
+          operator: string | null
           priority: Database["public"]["Enums"]["issue_priority"] | null
           reported_by: string | null
           resolved_at: string | null
@@ -115,11 +161,15 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          component?: string | null
           created_at?: string | null
+          date?: string | null
           department?: string | null
           description: string
           id?: string
           location?: string | null
+          notify_flag?: boolean | null
+          operator?: string | null
           priority?: Database["public"]["Enums"]["issue_priority"] | null
           reported_by?: string | null
           resolved_at?: string | null
@@ -129,11 +179,15 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          component?: string | null
           created_at?: string | null
+          date?: string | null
           department?: string | null
           description?: string
           id?: string
           location?: string | null
+          notify_flag?: boolean | null
+          operator?: string | null
           priority?: Database["public"]["Enums"]["issue_priority"] | null
           reported_by?: string | null
           resolved_at?: string | null
