@@ -16,40 +16,40 @@ import { useIssue, useCreateIssue, useUpdateIssue } from "@/hooks/useIssues";
 
 const COMPONENTS = [
   "Acc_noc",
-  "rams",
-  "m3",
-  "traffic iit",
-  "traffic iot",
-  "traffic offnet",
-  "netsys",
-  "sim reg",
-  "eirs & ceir",
-  "anti-fraud",
-  "preventive maintenance",
-  "all components",
+  "Rams",
+  "M3",
+  "Traffic IIT",
+  "Traffic IOT",
+  "Traffic Offnet",
+  "Netsys",
+  "Sim Reg",
+  "EIRS & CEIR",
+  "Anti-Fraud",
+  "Preventive Maintenance",
+  "All Components",
 ];
 
 const OPERATORS = [
   "ACC_NOC",
   "Afriwave",
-  "airteltigo",
-  "all operators",
-  "comsys",
-  "mtn",
-  "telecel",
+  "AirtelTigo",
+  "All Operators",
+  "Comsys",
+  "MTN",
+  "Telecel",
 ];
 
 const DEPARTMENTS = [
-  "afriwave",
+  "Afriwave",
   "AT",
   "Comsys",
   "CP team",
   "MTN",
   "Support",
   "Technical team",
-  "telecel",
-  "vdf",
-  "vodafone",
+  "Telecel",
+  "VDF",
+  "Vodafone",
 ];
 
 const IssueForm = () => {

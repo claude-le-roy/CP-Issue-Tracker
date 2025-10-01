@@ -134,7 +134,15 @@ const IssueDetail = () => {
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-mono text-muted-foreground bg-muted px-2 py-1 rounded">
+                  ID: {issue.id.slice(0, 8)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  Logged: {format(new Date(issue.date || issue.created_at), "MMM dd, yyyy HH:mm")}
+                </span>
+              </div>
               <CardTitle className="text-2xl">{issue.title}</CardTitle>
               <div className="flex gap-2 flex-wrap">
                 <Badge variant={issue.priority === "critical" ? "destructive" : "outline"}>

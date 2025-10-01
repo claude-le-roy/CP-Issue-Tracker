@@ -125,10 +125,10 @@ const Issues = () => {
         </CardContent>
       </Card>
 
-      {/* Issues List */}
-      <div className="grid gap-4">
+      {/* Issues List - 3 Column Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedFilteredIssues.length === 0 ? (
-          <Card>
+          <Card className="col-span-full">
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">No issues found</p>
             </CardContent>
@@ -137,44 +137,64 @@ const Issues = () => {
           sortedFilteredIssues.map((issue) => (
             <Card
               key={issue.id}
-              className="cursor-pointer hover:border-primary/50 transition-colors"
+              className="cursor-pointer hover:border-primary/50 transition-colors flex flex-col"
               onClick={() => navigate(`/issues/${issue.id}`)}
             >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1">
-                    <CardTitle className="text-lg">{issue.title}</CardTitle>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {issue.description}
-                    </p>
+              <CardHeader className="pb-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground font-mono">
+                      ID: {issue.id.slice(0, 8)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(issue.date || issue.created_at), "MMM dd, yyyy")}
+                    </span>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <Badge variant={getPriorityColor(issue.priority)}>
+                  <CardTitle className="text-base line-clamp-2">{issue.title}</CardTitle>
+                  <div className="flex gap-1 flex-wrap">
+                    <Badge variant={getPriorityColor(issue.priority)} className="text-xs">
                       {issue.priority}
                     </Badge>
-                    <Badge variant={getStatusColor(issue.status)}>
+                    <Badge variant={getStatusColor(issue.status)} className="text-xs">
                       {issue.status.replace("_", " ")}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    {issue.component && (
-                      <span>Component: {issue.component}</span>
-                    )}
-                    {issue.responsible_department && (
-                      <span>Dept: {issue.responsible_department}</span>
-                    )}
-                    {issue.operator && (
-                      <span>Operator: {issue.operator}</span>
-                    )}
-                    {issue.profiles?.full_name && (
-                      <span>By: {issue.profiles.full_name}</span>
-                    )}
-                  </div>
-                  <span>{format(new Date(issue.date || issue.created_at), "MMM dd, yyyy")}</span>
+              <CardContent className="flex-1 space-y-2">
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {issue.description}
+                </p>
+                <div className="space-y-1 text-xs">
+                  {issue.component && (
+                    <div><span className="font-medium">Component:</span> {issue.component}</div>
+                  )}
+                  {issue.operator && (
+                    <div><span className="font-medium">Operator:</span> {issue.operator}</div>
+                  )}
+                  {issue.responsible_department && (
+                    <div><span className="font-medium">Responsible:</span> {issue.responsible_department}</div>
+                  )}
+                  {issue.issue_logger && (
+                    <div><span className="font-medium">Logger:</span> {issue.issue_logger}</div>
+                  )}
+                  {issue.resolution_steps && (
+                    <div className="pt-1">
+                      <span className="font-medium">Resolution:</span>
+                      <p className="line-clamp-2 text-muted-foreground">{issue.resolution_steps}</p>
+                    </div>
+                  )}
+                  {issue.issue_updates && issue.issue_updates.length > 0 && (
+                    <div><span className="font-medium">Updates:</span> {issue.issue_updates.length}</div>
+                  )}
+                  {issue.closing_date && (
+                    <div><span className="font-medium">Closed:</span> {format(new Date(issue.closing_date), "MMM dd, yyyy")}</div>
+                  )}
+                  {issue.time_to_resolve && (
+                    <div className="text-muted-foreground">
+                      <span className="font-medium">Resolution Time:</span> {issue.time_to_resolve}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
