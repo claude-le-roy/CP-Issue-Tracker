@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useIssues } from "@/hooks/useIssues";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
@@ -15,114 +14,86 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Legend,
 } from "recharts";
 
-interface AnalyticsData {
-  byStatus: Array<{ name: string; count: number; color: string }>;
-  byPriority: Array<{ name: string; count: number; color: string }>;
-  byDepartment: Array<{ name: string; count: number }>;
-  trend: Array<{ date: string; open: number; resolved: number }>;
-}
-
 const Analytics = () => {
-  const [data, setData] = useState<AnalyticsData>({
-    byStatus: [],
-    byPriority: [],
-    byDepartment: [],
-    trend: [],
-  });
-  const [loading, setLoading] = useState(true);
+  const { data: issues = [], isLoading } = useIssues();
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  // By Status
+  const statusCounts = issues.reduce((acc: any, issue) => {
+    acc[issue.status] = (acc[issue.status] || 0) + 1;
+    return acc;
+  }, {});
 
-  const fetchAnalytics = async () => {
-    try {
-      const { data: issues, error } = await supabase
-        .from("issues")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const statusData = Object.entries(statusCounts).map(([name, count]) => ({
+    name: name.replace("_", " "),
+    count: count as number,
+    color:
+      name === "open"
+        ? "#f59e0b"
+        : name === "in_progress"
+        ? "#3b82f6"
+        : name === "resolved"
+        ? "#10b981"
+        : "#6b7280",
+  }));
 
-      if (error) throw error;
+  // By Priority
+  const priorityCounts = issues.reduce((acc: any, issue) => {
+    acc[issue.priority] = (acc[issue.priority] || 0) + 1;
+    return acc;
+  }, {});
 
-      // By Status
-      const statusCounts = issues?.reduce((acc: any, issue) => {
-        acc[issue.status] = (acc[issue.status] || 0) + 1;
-        return acc;
-      }, {});
+  const priorityData = Object.entries(priorityCounts).map(
+    ([name, count]) => ({
+      name,
+      count: count as number,
+      color:
+        name === "critical"
+          ? "#ef4444"
+          : name === "high"
+          ? "#f59e0b"
+          : name === "medium"
+          ? "#3b82f6"
+          : "#10b981",
+    })
+  );
 
-      const statusData = Object.entries(statusCounts || {}).map(([name, count]) => ({
-        name: name.replace("_", " "),
-        count: count as number,
-        color:
-          name === "open"
-            ? "#f59e0b"
-            : name === "in_progress"
-            ? "#3b82f6"
-            : name === "resolved"
-            ? "#10b981"
-            : "#6b7280",
-      }));
+  // By Department
+  const departmentCounts = issues
+    .filter((i) => i.department)
+    .reduce((acc: any, issue) => {
+      acc[issue.department] = (acc[issue.department] || 0) + 1;
+      return acc;
+    }, {});
 
-      // By Priority
-      const priorityCounts = issues?.reduce((acc: any, issue) => {
-        acc[issue.priority] = (acc[issue.priority] || 0) + 1;
-        return acc;
-      }, {});
+  const departmentData = Object.entries(departmentCounts).map(
+    ([name, count]) => ({
+      name,
+      count: count as number,
+    })
+  );
 
-      const priorityData = Object.entries(priorityCounts || {}).map(
-        ([name, count]) => ({
-          name,
-          count: count as number,
-          color:
-            name === "critical"
-              ? "#ef4444"
-              : name === "high"
-              ? "#f59e0b"
-              : name === "medium"
-              ? "#3b82f6"
-              : "#10b981",
-        })
-      );
+  // By Component
+  const componentCounts = issues
+    .filter((i) => i.component)
+    .reduce((acc: any, issue) => {
+      acc[issue.component] = (acc[issue.component] || 0) + 1;
+      return acc;
+    }, {});
 
-      // By Department
-      const departmentCounts = issues
-        ?.filter((i) => i.department)
-        .reduce((acc: any, issue) => {
-          acc[issue.department] = (acc[issue.department] || 0) + 1;
-          return acc;
-        }, {});
-
-      const departmentData = Object.entries(departmentCounts || {}).map(
-        ([name, count]) => ({
-          name,
-          count: count as number,
-        })
-      );
-
-      setData({
-        byStatus: statusData,
-        byPriority: priorityData,
-        byDepartment: departmentData,
-        trend: [],
-      });
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      toast.error("Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const componentData = Object.entries(componentCounts).map(
+    ([name, count]) => ({
+      name,
+      count: count as number,
+    })
+  );
 
   const handleExport = () => {
     toast.info("Export functionality will be implemented with PDF/Excel generation");
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -153,13 +124,13 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.byStatus}>
+              <BarChart data={statusData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                  {data.byStatus.map((entry, index) => (
+                  {statusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
@@ -177,7 +148,7 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={data.byPriority}
+                  data={priorityData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -188,7 +159,7 @@ const Analytics = () => {
                   fill="#8884d8"
                   dataKey="count"
                 >
-                  {data.byPriority.map((entry, index) => (
+                  {priorityData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -199,14 +170,14 @@ const Analytics = () => {
         </Card>
 
         {/* Department Distribution */}
-        {data.byDepartment.length > 0 && (
+        {departmentData.length > 0 && (
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Issues by Department</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.byDepartment}>
+                <BarChart data={departmentData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -214,6 +185,30 @@ const Analytics = () => {
                   <Bar
                     dataKey="count"
                     fill="hsl(var(--primary))"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Component Distribution */}
+        {componentData.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Issues by Component</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={componentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar
+                    dataKey="count"
+                    fill="hsl(var(--secondary))"
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>

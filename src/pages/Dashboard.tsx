@@ -1,56 +1,20 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useIssues } from "@/hooks/useIssues";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2, Clock, Plus, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-interface Stats {
-  total: number;
-  open: number;
-  inProgress: number;
-  resolved: number;
-  critical: number;
-}
-
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats>({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-    critical: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const { data: issues = [], isLoading } = useIssues();
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const { data: issues, error } = await supabase
-        .from("issues")
-        .select("status, priority");
-
-      if (error) throw error;
-
-      const newStats = {
-        total: issues?.length || 0,
-        open: issues?.filter((i) => i.status === "open").length || 0,
-        inProgress: issues?.filter((i) => i.status === "in_progress").length || 0,
-        resolved: issues?.filter((i) => i.status === "resolved").length || 0,
-        critical: issues?.filter((i) => i.priority === "critical").length || 0,
-      };
-
-      setStats(newStats);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setLoading(false);
-    }
+  const stats = {
+    total: issues.length,
+    open: issues.filter((i) => i.status === "open").length,
+    inProgress: issues.filter((i) => i.status === "in_progress").length,
+    resolved: issues.filter((i) => i.status === "resolved").length,
+    critical: issues.filter((i) => i.priority === "critical").length,
   };
 
   const statusData = [
@@ -65,7 +29,7 @@ const Dashboard = () => {
     { name: "Resolved", count: stats.resolved },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

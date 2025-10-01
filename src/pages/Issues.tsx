@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useIssues } from "@/hooks/useIssues";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,53 +10,12 @@ import { Plus, Search, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface Issue {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  department: string;
-  created_at: string;
-  reported_by: string;
-  profiles?: {
-    full_name: string;
-  };
-}
-
 const Issues = () => {
   const navigate = useNavigate();
-  const [issues, setIssues] = useState<Issue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: issues = [], isLoading } = useIssues();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
-
-  useEffect(() => {
-    fetchIssues();
-  }, []);
-
-  const fetchIssues = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("issues")
-        .select(`
-          *,
-          profiles!issues_reported_by_fkey (
-            full_name
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setIssues(data || []);
-    } catch (error) {
-      console.error("Error fetching issues:", error);
-      toast.error("Failed to load issues");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleExport = async () => {
     toast.info("Export functionality coming soon!");
@@ -72,35 +31,25 @@ const Issues = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "critical":
-        return "destructive";
-      case "high":
-        return "warning";
-      case "medium":
-        return "default";
-      case "low":
-        return "secondary";
-      default:
-        return "default";
+      case "critical": return "destructive";
+      case "high": return "warning";
+      case "medium": return "default";
+      case "low": return "secondary";
+      default: return "default";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "open":
-        return "warning";
-      case "in_progress":
-        return "info";
-      case "resolved":
-        return "success";
-      case "closed":
-        return "secondary";
-      default:
-        return "default";
+      case "open": return "warning";
+      case "in_progress": return "info";
+      case "resolved": return "success";
+      case "closed": return "secondary";
+      default: return "default";
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -203,15 +152,21 @@ const Issues = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {issue.component && (
+                      <span>Component: {issue.component}</span>
+                    )}
                     {issue.department && (
-                      <span>Department: {issue.department}</span>
+                      <span>Dept: {issue.department}</span>
+                    )}
+                    {issue.operator && (
+                      <span>Operator: {issue.operator}</span>
                     )}
                     {issue.profiles?.full_name && (
-                      <span>Reported by: {issue.profiles.full_name}</span>
+                      <span>By: {issue.profiles.full_name}</span>
                     )}
                   </div>
-                  <span>{format(new Date(issue.created_at), "MMM dd, yyyy")}</span>
+                  <span>{format(new Date(issue.date || issue.created_at), "MMM dd, yyyy")}</span>
                 </div>
               </CardContent>
             </Card>

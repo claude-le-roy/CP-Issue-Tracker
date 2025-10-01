@@ -1,142 +1,94 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useIssue, useDeleteIssue } from "@/hooks/useIssues";
+import { useAttachments, useUploadAttachment, useDeleteAttachment, useDownloadAttachment } from "@/hooks/useAttachments";
+import { useActivityLogs } from "@/hooks/useActivityLogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Edit, Trash2, MessageSquare } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Edit, Trash2, MessageSquare, Upload, Download, X, Clock, FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
-interface Issue {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  department: string;
-  location: string;
-  created_at: string;
-  updated_at: string;
-  reported_by: string;
-  profiles?: {
-    full_name: string;
-    email: string;
-  };
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  profiles?: {
-    full_name: string;
-  };
-}
 
 const IssueDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [issue, setIssue] = useState<Issue | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const { data: issue, isLoading } = useIssue(id!);
+  const { data: attachments = [] } = useAttachments(id!);
+  const { data: activityLogs = [] } = useActivityLogs(id!);
+  const deleteIssueMutation = useDeleteIssue();
+  const uploadMutation = useUploadAttachment();
+  const deleteAttachmentMutation = useDeleteAttachment();
+  const downloadMutation = useDownloadAttachment();
+  
   const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<any[]>([]);
   const [userId, setUserId] = useState<string>("");
+  const [uploadingFile, setUploadingFile] = useState(false);
 
-  useEffect(() => {
-    fetchIssue();
+  useState(() => {
     fetchComments();
     getCurrentUser();
-  }, [id]);
+  });
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) setUserId(user.id);
   };
 
-  const fetchIssue = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("issues")
-        .select(`
-          *,
-          profiles!issues_reported_by_fkey (
-            full_name,
-            email
-          )
-        `)
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-      setIssue(data);
-    } catch (error) {
-      console.error("Error fetching issue:", error);
-      toast.error("Failed to load issue");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchComments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("comments")
-        .select(`
-          *,
-          profiles:user_id (
-            full_name
-          )
-        `)
-        .eq("issue_id", id)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      setComments(data || []);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    }
+    const { data } = await supabase
+      .from("comments")
+      .select(`*, profiles (full_name)`)
+      .eq("issue_id", id)
+      .order("created_at", { ascending: true });
+    
+    if (data) setComments(data);
   };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
-    try {
-      const { error } = await supabase.from("comments").insert({
-        issue_id: id,
-        user_id: userId,
-        content: newComment.trim(),
-      });
+    const { error } = await supabase.from("comments").insert({
+      issue_id: id,
+      user_id: userId,
+      content: newComment.trim(),
+    });
 
-      if (error) throw error;
-
+    if (!error) {
       setNewComment("");
       fetchComments();
       toast.success("Comment added");
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast.error("Failed to add comment");
     }
   };
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this issue?")) return;
-
-    try {
-      const { error } = await supabase.from("issues").delete().eq("id", id);
-
-      if (error) throw error;
-
-      toast.success("Issue deleted");
-      navigate("/issues");
-    } catch (error) {
-      console.error("Error deleting issue:", error);
-      toast.error("Failed to delete issue");
-    }
+    deleteIssueMutation.mutate(id!, {
+      onSuccess: () => navigate("/issues"),
+    });
   };
 
-  if (loading) {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    setUploadingFile(true);
+    uploadMutation.mutate(
+      { issueId: id!, file },
+      { onSettled: () => setUploadingFile(false) }
+    );
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -184,9 +136,14 @@ const IssueDetail = () => {
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <CardTitle className="text-2xl">{issue.title}</CardTitle>
-              <div className="flex gap-2">
-                <Badge variant="outline">{issue.priority}</Badge>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant={issue.priority === "critical" ? "destructive" : "outline"}>
+                  {issue.priority}
+                </Badge>
                 <Badge variant="outline">{issue.status.replace("_", " ")}</Badge>
+                {issue.notify_flag && (
+                  <Badge variant="info">Notifications On</Badge>
+                )}
               </div>
             </div>
           </div>
@@ -197,7 +154,25 @@ const IssueDetail = () => {
             <p className="text-muted-foreground whitespace-pre-wrap">{issue.description}</p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <h4 className="font-medium text-sm mb-1">Date</h4>
+              <p className="text-muted-foreground">
+                {format(new Date(issue.date || issue.created_at), "PPP")}
+              </p>
+            </div>
+            {issue.component && (
+              <div>
+                <h4 className="font-medium text-sm mb-1">Component</h4>
+                <p className="text-muted-foreground">{issue.component}</p>
+              </div>
+            )}
+            {issue.operator && (
+              <div>
+                <h4 className="font-medium text-sm mb-1">Operator</h4>
+                <p className="text-muted-foreground">{issue.operator}</p>
+              </div>
+            )}
             {issue.department && (
               <div>
                 <h4 className="font-medium text-sm mb-1">Department</h4>
@@ -216,17 +191,115 @@ const IssueDetail = () => {
                 <p className="text-muted-foreground">{issue.profiles.full_name}</p>
               </div>
             )}
-            <div>
-              <h4 className="font-medium text-sm mb-1">Created</h4>
-              <p className="text-muted-foreground">
-                {format(new Date(issue.created_at), "PPpp")}
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Comments Section */}
+      {/* Attachments */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Attachments ({attachments.length})
+            </CardTitle>
+            <label>
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleFileUpload}
+                disabled={uploadingFile}
+              />
+              <Button variant="outline" size="sm" disabled={uploadingFile} asChild>
+                <span className="gap-2 cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                  {uploadingFile ? "Uploading..." : "Upload"}
+                </span>
+              </Button>
+            </label>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {attachments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No attachments yet</p>
+          ) : (
+            <div className="space-y-2">
+              {attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{attachment.file_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(attachment.file_size / 1024).toFixed(2)} KB
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => downloadMutation.mutate(attachment.file_path)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    {userId === attachment.uploaded_by && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          deleteAttachmentMutation.mutate({
+                            id: attachment.id,
+                            filePath: attachment.file_path,
+                            issueId: id!,
+                          })
+                        }
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Activity Log */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Activity Log ({activityLogs.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activityLogs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No activity yet</p>
+          ) : (
+            <div className="space-y-3">
+              {activityLogs.map((log) => (
+                <div key={log.id} className="border-l-2 border-primary/20 pl-4 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">
+                      {log.profiles?.full_name || "System"} {log.action} this issue
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(log.created_at), "PPp")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Comments */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
