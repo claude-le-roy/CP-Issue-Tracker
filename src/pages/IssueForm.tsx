@@ -13,6 +13,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useIssue, useCreateIssue, useUpdateIssue } from "@/hooks/useIssues";
+import { toast } from "sonner";
 
 const COMPONENTS = [
   "Acc_noc",
@@ -121,8 +122,11 @@ const IssueForm = () => {
       );
     } else {
       createIssue.mutate(issueData, {
-        onSuccess: (data) => {
-          navigate(`/issues/${data.id}`);
+        onSuccess: () => {
+          toast.success("Issue created successfully", {
+            duration: 3000,
+          });
+          navigate("/issues");
         },
       });
     }
