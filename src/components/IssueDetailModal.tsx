@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIssue, useUpdateIssue } from "@/hooks/useIssues";
 import { useAttachments, useUploadAttachment, useDeleteAttachment, useDownloadAttachment } from "@/hooks/useAttachments";
 import { useActivityLogs } from "@/hooks/useActivityLogs";
@@ -63,14 +63,14 @@ export const IssueDetailModal = ({ issueId, open, onOpenChange }: IssueDetailMod
     priority: "",
   });
 
-  useState(() => {
+  useEffect(() => {
     if (issueId) {
       fetchComments();
       getCurrentUser();
     }
-  });
+  }, [issueId]);
 
-  useState(() => {
+  useEffect(() => {
     if (issue) {
       setEditedIssue({
         component: issue.component || "",
@@ -83,7 +83,7 @@ export const IssueDetailModal = ({ issueId, open, onOpenChange }: IssueDetailMod
         priority: issue.priority || "",
       });
     }
-  });
+  }, [issue]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
