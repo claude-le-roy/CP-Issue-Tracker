@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { useIssues } from "@/hooks/useIssues";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { FileDown, FileText, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { generatePDFReport, generateExcelReport } from "@/lib/reportGenerator";
 import {
   BarChart,
   Bar,
@@ -18,6 +23,8 @@ import {
 
 const Analytics = () => {
   const { data: issues = [], isLoading } = useIssues();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [managerComments, setManagerComments] = useState("");
 
   // By Status
   const statusCounts = issues.reduce((acc: any, issue) => {
@@ -89,8 +96,36 @@ const Analytics = () => {
     })
   );
 
-  const handleExport = () => {
-    toast.info("Export functionality will be implemented with PDF/Excel generation");
+  const handleExportPDF = () => {
+    const reportData = {
+      issues,
+      statusData,
+      priorityData,
+      departmentData,
+      componentData,
+      managerComments,
+    };
+    
+    generatePDFReport(reportData);
+    toast.success("PDF report generated successfully", { duration: 3000 });
+    setExportDialogOpen(false);
+    setManagerComments("");
+  };
+
+  const handleExportExcel = () => {
+    const reportData = {
+      issues,
+      statusData,
+      priorityData,
+      departmentData,
+      componentData,
+      managerComments,
+    };
+    
+    generateExcelReport(reportData);
+    toast.success("Excel report generated successfully", { duration: 3000 });
+    setExportDialogOpen(false);
+    setManagerComments("");
   };
 
   if (isLoading) {
@@ -110,7 +145,7 @@ const Analytics = () => {
             Insights and trends for workplace issues
           </p>
         </div>
-        <Button onClick={handleExport} className="gap-2">
+        <Button onClick={() => setExportDialogOpen(true)} className="gap-2">
           <FileDown className="h-4 w-4" />
           Export Report
         </Button>
@@ -217,6 +252,48 @@ const Analytics = () => {
           </Card>
         )}
       </div>
+
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Export Report</DialogTitle>
+            <DialogDescription>
+              Add optional manager comments to include in the report
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="comments">Manager Comments (Optional)</Label>
+              <Textarea
+                id="comments"
+                placeholder="Enter any additional comments or notes..."
+                value={managerComments}
+                onChange={(e) => setManagerComments(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleExportPDF}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button
+              onClick={handleExportExcel}
+              className="gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export Excel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

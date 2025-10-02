@@ -2,14 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface IssueUpdate {
+export interface IssueUpdate {
   update_text: string;
   update_date: string;
   updated_by: string;
   updated_by_name?: string;
 }
 
-interface Issue {
+export interface Issue {
   id: string;
   title: string;
   description: string;
