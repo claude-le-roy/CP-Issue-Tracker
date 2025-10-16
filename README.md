@@ -356,16 +356,3 @@ Deploy via Lovable:
 - [ ] Issue templates
 - [ ] Advanced search with saved filters
 
-## Support
-
-- [Lovable Documentation](https://docs.lovable.dev/)
-- [Lovable Discord](https://discord.gg/lovable)
-- Email: support@lovable.dev
-
-## License
-
-This project is created with Lovable.
-
----
-
-Built with ❤️ using [Lovable](https://lovable.dev)
